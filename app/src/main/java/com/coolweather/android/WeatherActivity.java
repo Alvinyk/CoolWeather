@@ -4,11 +4,15 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -42,6 +46,10 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView tv_sport;
     private ImageView iv_bingPic;
     private SharedPreferences prefs;
+    private String weatherId;
+    private SwipeRefreshLayout swipeRefresh;
+    private DrawerLayout drawerLayout;
+    private Button btn_nav;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,8 +63,18 @@ public class WeatherActivity extends AppCompatActivity {
         initWeatherInfo();
 
         initBingPic();
+
+        setRefreshListener();
     }
 
+    private void setRefreshListener(){
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestWeather(weatherId);
+            }
+        });
+    }
     private void setSystemUiShow(){
         if(Build.VERSION.SDK_INT >= 21){
             View decorView = getWindow().getDecorView();
@@ -69,9 +87,10 @@ public class WeatherActivity extends AppCompatActivity {
         String weatherString = prefs.getString("weather",null);
         if(weatherString != null){
             Weather weather = Utility.handleWeatherResponse(weatherString);
+            weatherId = weather.basic.weatherId;
             showWeatherInfo(weather);
         }else{
-            String weatherId = getIntent().getStringExtra("weather_id");
+            weatherId = getIntent().getStringExtra("weather_id");
             sv_veather.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
         }
@@ -98,6 +117,18 @@ public class WeatherActivity extends AppCompatActivity {
         tv_carWash = (TextView) findViewById(R.id.car_wash_text);
         tv_sport = (TextView) findViewById(R.id.sport_text);
         iv_bingPic = (ImageView) findViewById(R.id.bing_pic_img);
+
+        swipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
+
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        btn_nav = (Button) findViewById(R.id.nav_button);
+        btn_nav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
     }
 
     public void requestWeather(final String weatherId){
@@ -112,6 +143,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_SHORT).show();
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -132,6 +164,7 @@ public class WeatherActivity extends AppCompatActivity {
                         }else{
                             Toast.makeText(WeatherActivity.this,"获取天气信息失败",Toast.LENGTH_SHORT).show();
                         }
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -203,5 +236,13 @@ public class WeatherActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    public void closeDrawers(){
+        drawerLayout.closeDrawers();
+    }
+
+    public void startRefreshing(){
+        swipeRefresh.setRefreshing(true);
     }
 }

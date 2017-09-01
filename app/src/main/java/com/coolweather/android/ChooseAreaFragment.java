@@ -88,11 +88,7 @@ public class ChooseAreaFragment extends Fragment {
                     queryCounties();
                 }else if(currentLevel == LEVEL_COUNTY){
                     String weatherId = countyList.get(position).getWeatherId();
-                    Intent intent = new Intent(getActivity(),WeatherActivity.class);
-
-                    intent.putExtra("weather_id",weatherId);
-                    startActivity(intent);
-                    getActivity().finish();
+                    showWeatherPage(weatherId);
                 }
             }
         });
@@ -112,6 +108,21 @@ public class ChooseAreaFragment extends Fragment {
     }
 
 
+    private void showWeatherPage(String weatherId){
+        if(getActivity() instanceof MainActivity){
+            Intent intent = new Intent(getActivity(),WeatherActivity.class);
+
+            intent.putExtra("weather_id",weatherId);
+            startActivity(intent);
+            getActivity().finish();
+        }else if(getActivity() instanceof WeatherActivity){
+            WeatherActivity activity = (WeatherActivity)getActivity();
+            activity.closeDrawers();
+            activity.startRefreshing();
+            activity.requestWeather(weatherId);
+        }
+
+    }
     private void queryProvinces(){
         titleText.setText("中国");
         backButton.setVisibility(View.GONE);
